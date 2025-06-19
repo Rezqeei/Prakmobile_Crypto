@@ -162,10 +162,11 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
         if (_currentPage == 1)
           TextButton(
             onPressed: _finishOnboarding,
-            child: const Text('Skip', style: TextStyle(color: Colors.white, fontSize: 16)),
+            child: const Text('Skip',
+                style: TextStyle(color: Colors.white, fontSize: 16)),
           ),
         if (_currentPage != 1) const Spacer(), // Jaga posisi tombol kanan
-        
+
         // Tombol Next atau Get Started
         ElevatedButton(
           onPressed: () {
@@ -185,9 +186,10 @@ class _OnboardingScreenState extends State<OnboardingScreen> {
             ),
           ),
           child: Text(
-            _currentPage == _onboardingData.length - 1 ? 'Get Started' : 'Next',
-            style: const TextStyle(color: Colors.white, fontSize: 16)
-          ),
+              _currentPage == _onboardingData.length - 1
+                  ? 'Get Started'
+                  : 'Next',
+              style: const TextStyle(color: Colors.white, fontSize: 16)),
         ),
       ],
     );
