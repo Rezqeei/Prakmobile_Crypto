@@ -1,3 +1,5 @@
+// lib/article_model.dart
+
 class Article {
   final String id;
   final String title;
@@ -9,7 +11,7 @@ class Article {
   final Author author;
   final String createdAt;
   final List<String> tags;
-  final bool isTrending; // TAMBAHKAN PROPERTI INI
+  final bool isTrending;
 
   Article({
     required this.id,
@@ -22,9 +24,10 @@ class Article {
     required this.author,
     required this.createdAt,
     required this.tags,
-    required this.isTrending, // TAMBAHKAN DI CONSTRUCTOR
+    required this.isTrending,
   });
 
+  // GANTI FUNGSI DI BAWAH INI
   factory Article.fromJson(Map<String, dynamic> json) {
     return Article(
       id: json['id'],
@@ -34,10 +37,15 @@ class Article {
       readTime: json['readTime'],
       imageUrl: json['imageUrl'],
       content: json['content'],
-      author: Author.fromJson(json['author']),
+      // --- PERBAIKAN ---
+      // Cek apakah 'author' null atau bukan. Jika null, buat Author default.
+      author: json['author'] != null && json['author'] is Map<String, dynamic>
+          ? Author.fromJson(json['author'])
+          : Author(name: 'Unknown Author', title: 'Content Creator', avatar: 'https://via.placeholder.com/150'),
+      // --- AKHIR PERBAIKAN ---
       createdAt: json['createdAt'],
       tags: List<String>.from(json['tags'] ?? []),
-      isTrending: json['isTrending'] ?? false, // AMBIL DATA isTrending DARI JSON
+      isTrending: json['isTrending'] ?? false,
     );
   }
 }
