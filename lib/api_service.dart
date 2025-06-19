@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'article_model.dart';
 import 'auth_service.dart';
+import 'user_model.dart'; // Impor model User yang baru dibuat
 
 class ApiService {
   final String baseUrl = "https://rest-api-berita.vercel.app/api/v1";
@@ -186,4 +187,41 @@ class ApiService {
   }
 
   // --- FUNGSI-FUNGSI BARU UNTUK PROFIL ---
+
+  /// Mengambil data profil pengguna yang sedang login.
+  Future<User> getMyProfile() async {
+    final response = await _authenticatedRequest((token) => http.get(
+          Uri.parse('$baseUrl/auth/me'), // Asumsi endpoint ini ada
+          headers: {'Authorization': 'Bearer $token'},
+        ));
+    final data = _processResponse(response);
+    return User.fromJson(data);
+  }
+
+  /// Mengupdate data profil pengguna.
+  Future<void> updateProfile(Map<String, String> profileData) async {
+    await _authenticatedRequest((token) => http.put(
+          Uri.parse('$baseUrl/auth/update'), // Asumsi endpoint ini ada
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode(profileData),
+        ));
+  }
+
+  /// Mengganti password pengguna.
+  Future<void> changePassword(String oldPassword, String newPassword) async {
+    await _authenticatedRequest((token) => http.put(
+          Uri.parse('$baseUrl/auth/change-password'), // Asumsi endpoint ini ada
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'oldPassword': oldPassword,
+            'newPassword': newPassword,
+          }),
+        ));
+  }
 }

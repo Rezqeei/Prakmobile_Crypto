@@ -1,3 +1,5 @@
+// lib/screens/my_articles_page.dart
+
 import 'package:flutter/material.dart';
 import 'package:prakmobile_crypto/auth_service.dart'; // Import AuthService
 import 'package:prakmobile_crypto/login_page.dart'; // Import LoginPage
@@ -29,17 +31,7 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
     });
   }
 
-  // Fungsi untuk melakukan logout
-  void _handleLogout() async {
-    await _authService.logout();
-    if (mounted) {
-      // Arahkan ke LoginPage dan hapus semua halaman sebelumnya dari tumpukan navigasi
-      Navigator.of(context).pushAndRemoveUntil(
-        MaterialPageRoute(builder: (context) => const LoginPage()),
-        (Route<dynamic> route) => false,
-      );
-    }
-  }
+  // Fungsi logout sudah dipindahkan ke profile_page.dart
 
   void _deleteArticle(String articleId) async {
     final bool? confirmed = await showDialog<bool>(
@@ -71,33 +63,7 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
     return Scaffold(
       appBar: AppBar(
         title: const Text('Artikel Saya'),
-        // TAMBAHKAN TOMBOL LOGOUT DI SINI
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.logout),
-            tooltip: 'Logout',
-            onPressed: () {
-              // Tampilkan dialog konfirmasi sebelum logout
-              showDialog(
-                context: context,
-                builder: (context) => AlertDialog(
-                  title: const Text('Konfirmasi Logout'),
-                  content: const Text('Apakah Anda yakin ingin keluar?'),
-                  actions: [
-                    TextButton(
-                      onPressed: () => Navigator.of(context).pop(),
-                      child: const Text('Batal'),
-                    ),
-                    TextButton(
-                      onPressed: _handleLogout,
-                      child: const Text('Logout'),
-                    ),
-                  ],
-                ),
-              );
-            },
-          ),
-        ],
+        // Tombol logout sudah dihapus dari sini
       ),
       body: FutureBuilder<List<Article>>(
         future: _myArticlesFuture,

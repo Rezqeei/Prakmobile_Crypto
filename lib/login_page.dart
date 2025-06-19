@@ -1,3 +1,5 @@
+// lib/login_page.dart
+
 import 'package:flutter/material.dart';
 import 'api_service.dart';
 import 'auth_service.dart';
@@ -24,10 +26,14 @@ class _LoginPageState extends State<LoginPage> {
       final response = await _apiService.login(
           _emailController.text, _passwordController.text);
           
-      // PERBAIKAN: Langsung ambil 'token' dari response
+      // Ambil token dan data user dari respons
       final token = response['token'];
+      final user = response['user'];
 
+      // Simpan token DAN profil pengguna
       await _authService.saveToken(token);
+      await _authService.saveUserProfile(user);
+
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
         MaterialPageRoute(builder: (context) => const MainScreen()),
@@ -35,7 +41,6 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        // Menampilkan pesan error yang lebih bersih dari ApiService
         SnackBar(content: Text('Login Gagal: ${e.toString().replaceFirst("Exception: ", "")}')),
       );
     } finally {
