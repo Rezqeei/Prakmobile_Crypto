@@ -17,4 +17,10 @@ class AuthService {
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_tokenKey);
   }
+
+  // TAMBAHKAN FUNGSI INI
+  Future<void> logout() async {
+    // Cukup panggil deleteToken
+    await deleteToken();
+  }
 }

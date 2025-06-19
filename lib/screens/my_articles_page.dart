@@ -1,7 +1,9 @@
 import 'package:flutter/material.dart';
+import 'package:prakmobile_crypto/auth_service.dart'; // Import AuthService
+import 'package:prakmobile_crypto/login_page.dart'; // Import LoginPage
 import '../api_service.dart';
 import '../article_model.dart';
-import 'edit_article_page.dart'; // Halaman ini akan kita buat selanjutnya
+import 'edit_article_page.dart';
 
 class MyArticlesPage extends StatefulWidget {
   const MyArticlesPage({super.key});
@@ -12,6 +14,7 @@ class MyArticlesPage extends StatefulWidget {
 
 class _MyArticlesPageState extends State<MyArticlesPage> {
   final ApiService _apiService = ApiService();
+  final AuthService _authService = AuthService(); // Buat instance AuthService
   late Future<List<Article>> _myArticlesFuture;
 
   @override
@@ -26,8 +29,19 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
     });
   }
 
+  // Fungsi untuk melakukan logout
+  void _handleLogout() async {
+    await _authService.logout();
+    if (mounted) {
+      // Arahkan ke LoginPage dan hapus semua halaman sebelumnya dari tumpukan navigasi
+      Navigator.of(context).pushAndRemoveUntil(
+        MaterialPageRoute(builder: (context) => const LoginPage()),
+        (Route<dynamic> route) => false,
+      );
+    }
+  }
+
   void _deleteArticle(String articleId) async {
-    // Tampilkan dialog konfirmasi
     final bool? confirmed = await showDialog<bool>(
       context: context,
       builder: (context) => AlertDialog(
@@ -43,7 +57,7 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
     if (confirmed == true) {
       try {
         await _apiService.deleteArticle(articleId);
-        _loadMyArticles(); // Muat ulang daftar setelah berhasil menghapus
+        _loadMyArticles();
       } catch (e) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Gagal menghapus: $e')));
@@ -55,7 +69,36 @@ class _MyArticlesPageState extends State<MyArticlesPage> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Artikel Saya')),
+      appBar: AppBar(
+        title: const Text('Artikel Saya'),
+        // TAMBAHKAN TOMBOL LOGOUT DI SINI
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.logout),
+            tooltip: 'Logout',
+            onPressed: () {
+              // Tampilkan dialog konfirmasi sebelum logout
+              showDialog(
+                context: context,
+                builder: (context) => AlertDialog(
+                  title: const Text('Konfirmasi Logout'),
+                  content: const Text('Apakah Anda yakin ingin keluar?'),
+                  actions: [
+                    TextButton(
+                      onPressed: () => Navigator.of(context).pop(),
+                      child: const Text('Batal'),
+                    ),
+                    TextButton(
+                      onPressed: _handleLogout,
+                      child: const Text('Logout'),
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ],
+      ),
       body: FutureBuilder<List<Article>>(
         future: _myArticlesFuture,
         builder: (context, snapshot) {

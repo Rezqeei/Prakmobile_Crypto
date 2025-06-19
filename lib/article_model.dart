@@ -9,7 +9,7 @@ class Article {
   final Author author;
   final String createdAt;
   final List<String> tags;
-  final bool isTrending;
+  final bool isTrending; // TAMBAHKAN PROPERTI INI
 
   Article({
     required this.id,
@@ -22,26 +22,27 @@ class Article {
     required this.author,
     required this.createdAt,
     required this.tags,
-    required this.isTrending,
+    required this.isTrending, // TAMBAHKAN DI CONSTRUCTOR
   });
 
   factory Article.fromJson(Map<String, dynamic> json) {
     return Article(
-      id: json['id'] ?? '',
-      title: json['title'] ?? '',
-      category: json['category'] ?? '',
-      publishedAt: json['publishedAt'] ?? '',
-      readTime: json['readTime'] ?? '',
-      imageUrl: json['imageUrl'] ?? '',
-      content: json['content'] ?? '',
+      id: json['id'],
+      title: json['title'],
+      category: json['category'],
+      publishedAt: json['publishedAt'],
+      readTime: json['readTime'],
+      imageUrl: json['imageUrl'],
+      content: json['content'],
       author: Author.fromJson(json['author']),
-      createdAt: json['createdAt'] ?? '',
+      createdAt: json['createdAt'],
       tags: List<String>.from(json['tags'] ?? []),
-      isTrending: json['isTrending'] ?? false,
+      isTrending: json['isTrending'] ?? false, // AMBIL DATA isTrending DARI JSON
     );
   }
 }
 
+// Class Author tidak perlu diubah
 class Author {
   final String name;
   final String title;
@@ -53,15 +54,7 @@ class Author {
     required this.avatar,
   });
 
-  factory Author.fromJson(Map<String, dynamic>? json) {
-    // PERBAIKAN: Menangani kasus jika data author dari API adalah null.
-    if (json == null) {
-      return Author(
-        name: 'Penulis Tidak Dikenal',
-        title: '',
-        avatar: 'https://via.placeholder.com/150', // URL gambar placeholder
-      );
-    }
+  factory Author.fromJson(Map<String, dynamic> json) {
     return Author(
       name: json['name'] ?? 'Unknown Author',
       title: json['title'] ?? '',

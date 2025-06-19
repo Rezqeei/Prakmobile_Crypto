@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'article_model.dart';
 import 'auth_service.dart';
+import 'user_model.dart'; // Pastikan file ini sudah dibuat
 
 class ApiService {
   final String baseUrl = "https://rest-api-berita.vercel.app/api/v1";
@@ -11,18 +12,17 @@ class ApiService {
   dynamic _processResponse(http.Response response) {
     final body = json.decode(response.body);
     if (response.statusCode >= 200 && response.statusCode < 300) {
-      if (body['data'] == null) {
-        throw Exception("Data dari server kosong.");
-      }
-      return body['data'];
+      // Beberapa respons API mungkin tidak memiliki 'data', langsung body itu sendiri datanya
+      return body['data'] ?? body;
     } else {
       final message = body['message'] ?? 'Terjadi kesalahan tidak diketahui';
       throw Exception(message);
     }
   }
-  
+
   // Helper untuk request yang memerlukan otentikasi (token)
-  Future<http.Response> _authenticatedRequest(Future<http.Response> Function(String token) request) async {
+  Future<http.Response> _authenticatedRequest(
+      Future<http.Response> Function(String token) request) async {
     final token = await _authService.getToken();
     if (token == null) {
       throw Exception('Pengguna belum login. Silakan login terlebih dahulu.');
@@ -31,22 +31,21 @@ class ApiService {
   }
 
   /// Mengambil daftar artikel dengan dukungan pagination, kategori, dan pencarian.
-  Future<List<Article>> getArticles({String? category, int page = 1, int limit = 10, String? searchQuery}) async {
-    // Hapus parameter 'title' dari URL
+  Future<List<Article>> getArticles(
+      {String? category, int page = 1, int limit = 10, String? searchQuery}) async {
     var url = '$baseUrl/news?page=$page&limit=$limit';
     if (category != null && category.isNotEmpty) {
       url += '&category=$category';
     }
-    
+
     final response = await http.get(Uri.parse(url));
     final data = _processResponse(response);
     final List<dynamic> articlesData = data['articles'];
-    List<Article> articles = articlesData.map((json) => Article.fromJson(json)).toList();
+    List<Article> articles =
+        articlesData.map((json) => Article.fromJson(json)).toList();
 
-    // Lakukan filtering di sisi klien jika ada searchQuery
     if (searchQuery != null && searchQuery.isNotEmpty) {
       articles = articles.where((article) {
-        // Mencocokkan searchQuery dengan judul artikel (case-insensitive)
         return article.title.toLowerCase().contains(searchQuery.toLowerCase());
       }).toList();
     }
@@ -66,7 +65,9 @@ class ApiService {
 
   /// Mendaftarkan pengguna baru.
   Future<Map<String, dynamic>> register(
-      {required String email, required String password, required String name}) async {
+      {required String email,
+      required String password,
+      required String name}) async {
     final response = await http.post(
       Uri.parse('$baseUrl/auth/register'),
       headers: {'Content-Type': 'application/json; charset=UTF-8'},
@@ -84,22 +85,20 @@ class ApiService {
   /// Mengambil semua artikel yang telah di-bookmark oleh pengguna.
   Future<List<Article>> getBookmarkedArticles() async {
     final response = await _authenticatedRequest((token) {
-        return http.get(
-            Uri.parse('$baseUrl/news/bookmarks/list'),
-            headers: {'Authorization': 'Bearer $token'},
-        );
+      return http.get(
+        Uri.parse('$baseUrl/news/bookmarks/list'),
+        headers: {'Authorization': 'Bearer $token'},
+      );
     });
     final data = _processResponse(response);
-    
+
     if (data is Map<String, dynamic> && data.containsKey('articles')) {
-       final List<dynamic> articlesData = data['articles'];
-       return articlesData.map((json) => Article.fromJson(json)).toList();
-    } 
-    else if (data is List) {
-       return data.map((json) => Article.fromJson(json)).toList();
-    } 
-    else {
-       throw Exception('Format data bookmark tidak valid.');
+      final List<dynamic> articlesData = data['articles'];
+      return articlesData.map((json) => Article.fromJson(json)).toList();
+    } else if (data is List) {
+      return data.map((json) => Article.fromJson(json)).toList();
+    } else {
+      throw Exception('Format data bookmark tidak valid.');
     }
   }
 
@@ -117,18 +116,18 @@ class ApiService {
 
   /// Menambahkan artikel ke bookmark.
   Future<void> addBookmark(String articleId) async {
-     await _authenticatedRequest((token) => http.post(
-      Uri.parse('$baseUrl/news/$articleId/bookmark'),
-      headers: {'Authorization': 'Bearer $token'},
-    ));
+    await _authenticatedRequest((token) => http.post(
+          Uri.parse('$baseUrl/news/$articleId/bookmark'),
+          headers: {'Authorization': 'Bearer $token'},
+        ));
   }
 
   /// Menghapus artikel dari bookmark.
   Future<void> removeBookmark(String articleId) async {
     await _authenticatedRequest((token) => http.delete(
-      Uri.parse('$baseUrl/news/$articleId/bookmark'),
-      headers: {'Authorization': 'Bearer $token'},
-    ));
+          Uri.parse('$baseUrl/news/$articleId/bookmark'),
+          headers: {'Authorization': 'Bearer $token'},
+        ));
   }
 
   /// Mengambil artikel yang dibuat oleh pengguna.
@@ -155,7 +154,8 @@ class ApiService {
   }
 
   /// Mengupdate artikel.
-  Future<void> updateArticle(String articleId, Map<String, dynamic> articleData) async {
+  Future<void> updateArticle(
+      String articleId, Map<String, dynamic> articleData) async {
     await _authenticatedRequest((token) => http.put(
           Uri.parse('$baseUrl/news/$articleId'),
           headers: {
@@ -171,6 +171,48 @@ class ApiService {
     await _authenticatedRequest((token) => http.delete(
           Uri.parse('$baseUrl/news/$articleId'),
           headers: {'Authorization': 'Bearer $token'},
+        ));
+  }
+
+  // --- FUNGSI-FUNGSI BARU UNTUK PROFIL ---
+
+  /// Mengambil data profil pengguna yang sedang login.
+  Future<User> getUserProfile() async {
+    final response = await _authenticatedRequest((token) => http.get(
+          Uri.parse('$baseUrl/users/me'), // Asumsi endpoint
+          headers: {'Authorization': 'Bearer $token'},
+        ));
+    final data = _processResponse(response);
+    return User.fromJson(data);
+  }
+
+  /// Mengupdate data profil pengguna.
+  Future<void> updateUserProfile({required String name, required String title}) async {
+    await _authenticatedRequest((token) => http.put(
+          Uri.parse('$baseUrl/users/me'), // Asumsi endpoint
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({'name': name, 'title': title}),
+        ));
+  }
+
+  /// Mengubah kata sandi pengguna.
+  Future<void> changePassword({
+    required String currentPassword,
+    required String newPassword,
+  }) async {
+    await _authenticatedRequest((token) => http.put(
+          Uri.parse('$baseUrl/auth/password'), // Asumsi endpoint
+          headers: {
+            'Content-Type': 'application/json; charset=UTF-8',
+            'Authorization': 'Bearer $token',
+          },
+          body: jsonEncode({
+            'currentPassword': currentPassword,
+            'newPassword': newPassword,
+          }),
         ));
   }
 }

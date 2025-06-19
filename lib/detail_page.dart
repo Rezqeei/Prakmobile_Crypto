@@ -89,17 +89,16 @@ class _DetailPageState extends State<DetailPage> {
 
     // Menggunakan PopScope untuk mengembalikan nilai saat halaman ditutup
     return PopScope(
-      canPop: true,
-      onPopInvoked: (didPop) {
-        if (didPop) {
-          // Hanya kirim balik jika benar-benar pop, bukan gestur lain
-          Navigator.pop(context, _bookmarkStateChanged);
-        }
-      },
-      child: Scaffold(
-        body: CustomScrollView(
-          slivers: [
-            SliverAppBar(
+      canPop: false, // 1. Cegah pop bawaan
+      onPopInvoked: (bool didPop) {
+        if (!didPop) {
+          Navigator.of(context).pop(_bookmarkStateChanged);
+          }
+          },
+          child: Scaffold(
+            body: CustomScrollView(
+              slivers: [
+              SliverAppBar(
               expandedHeight: 250.0,
               floating: false,
               pinned: true,

@@ -15,35 +15,49 @@ class _EditArticlePageState extends State<EditArticlePage> {
   final _apiService = ApiService();
   bool _isLoading = false;
 
-  // Controllers untuk setiap field
+  // Controller untuk field lain tetap sama
   late TextEditingController _titleController;
   late TextEditingController _contentController;
-  late TextEditingController _categoryController;
   late TextEditingController _imageUrlController;
   late TextEditingController _readTimeController;
-  late TextEditingController _tagsController; // TAMBAHKAN CONTROLLER BARU
+  late TextEditingController _tagsController;
+
+  // PERUBAHAN 1: Buat daftar kategori dan variabel untuk menyimpan pilihan
+  final List<String> _kategoriList = const [
+    'Blockchain',
+    'NFT',
+    'Metaverse',
+    'Cryptocurrency',
+    'Technology',
+    'Market',
+  ];
+  String? _kategoriTerpilih;
 
   @override
   void initState() {
     super.initState();
-    // Inisialisasi controller dengan data artikel jika dalam mode 'Edit'
     _titleController = TextEditingController(text: widget.article?.title ?? '');
     _contentController = TextEditingController(text: widget.article?.content ?? '');
-    _categoryController = TextEditingController(text: widget.article?.category ?? 'Cryptocurrency');
     _imageUrlController = TextEditingController(text: widget.article?.imageUrl ?? '');
     _readTimeController = TextEditingController(text: widget.article?.readTime ?? '5 menit');
-    // Inisialisasi controller tags (menggabungkan tags menjadi string dipisahkan koma)
     _tagsController = TextEditingController(text: widget.article?.tags.join(', ') ?? '');
+
+    // PERUBAHAN 2: Atur nilai awal untuk dropdown kategori
+    if (widget.article != null && _kategoriList.contains(widget.article!.category)) {
+      _kategoriTerpilih = widget.article!.category;
+    } else {
+      // Nilai default jika membuat artikel baru
+      _kategoriTerpilih = 'Cryptocurrency';
+    }
   }
 
   @override
   void dispose() {
     _titleController.dispose();
     _contentController.dispose();
-    _categoryController.dispose();
     _imageUrlController.dispose();
     _readTimeController.dispose();
-    _tagsController.dispose(); // JANGAN LUPA DISPOSE CONTROLLER BARU
+    _tagsController.dispose();
     super.dispose();
   }
 
@@ -51,16 +65,16 @@ class _EditArticlePageState extends State<EditArticlePage> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      // Membuat daftar tags dengan memecah string dan menghapus spasi ekstra
       final List<String> tags = _tagsController.text.split(',').map((tag) => tag.trim()).toList();
 
       final articleData = {
         "title": _titleController.text,
         "content": _contentController.text,
-        "category": _categoryController.text,
+        // PERUBAHAN 3: Gunakan nilai dari variabel _kategoriTerpilih
+        "category": _kategoriTerpilih!,
         "imageUrl": _imageUrlController.text,
         "readTime": _readTimeController.text,
-        "tags": tags, // GUNAKAN DATA DARI CONTROLLER TAGS
+        "tags": tags,
         "isTrending": false,
       };
 
@@ -107,13 +121,29 @@ class _EditArticlePageState extends State<EditArticlePage> {
                 validator: (value) => value!.isEmpty ? 'Konten tidak boleh kosong' : null,
               ),
               const SizedBox(height: 16),
-              TextFormField(
-                controller: _categoryController,
-                decoration: const InputDecoration(labelText: 'Kategori', hintText: 'e.g., Cryptocurrency', border: OutlineInputBorder()),
-                validator: (value) => value!.isEmpty ? 'Kategori tidak boleh kosong' : null,
+              
+              // PERUBAHAN 4: Ganti TextFormField dengan DropdownButtonFormField
+              DropdownButtonFormField<String>(
+                value: _kategoriTerpilih,
+                decoration: const InputDecoration(
+                  labelText: 'Kategori',
+                  border: OutlineInputBorder(),
+                ),
+                items: _kategoriList.map((String kategori) {
+                  return DropdownMenuItem<String>(
+                    value: kategori,
+                    child: Text(kategori),
+                  );
+                }).toList(),
+                onChanged: (String? newValue) {
+                  setState(() {
+                    _kategoriTerpilih = newValue;
+                  });
+                },
+                validator: (value) => value == null ? 'Kategori harus dipilih' : null,
               ),
+
               const SizedBox(height: 16),
-              // TAMBAHKAN KOLOM INPUT BARU UNTUK TAGS
               TextFormField(
                 controller: _tagsController,
                 decoration: const InputDecoration(labelText: 'Tags', hintText: 'e.g., bitcoin, market, update', border: OutlineInputBorder()),
