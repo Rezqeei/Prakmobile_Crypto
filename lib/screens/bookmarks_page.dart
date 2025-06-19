@@ -13,7 +13,11 @@ class BookmarksPage extends StatefulWidget {
 
 class _BookmarksPageState extends State<BookmarksPage> {
   final ApiService apiService = ApiService();
-  late Future<List<Article>> _bookmarkedArticlesFuture;
+  
+  // Mengelola state secara lokal
+  List<Article> _bookmarkedArticles = [];
+  bool _isLoading = true;
+  String _error = '';
 
   @override
   void initState() {
@@ -21,14 +25,67 @@ class _BookmarksPageState extends State<BookmarksPage> {
     _loadBookmarks();
   }
   
-  void _loadBookmarks() {
+  Future<void> _loadBookmarks() async {
+    if (!mounted) return;
     setState(() {
-      _bookmarkedArticlesFuture = apiService.getBookmarkedArticles();
+      _isLoading = true;
+      _error = '';
     });
+
+    try {
+      final articles = await apiService.getBookmarkedArticles();
+      if (mounted) {
+        setState(() {
+          _bookmarkedArticles = articles;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _error = 'Gagal memuat bookmark: ${e.toString()}';
+          _isLoading = false;
+        });
+      }
+    }
   }
 
-  Future<void> _refreshBookmarks() async {
-    _loadBookmarks();
+  Widget _buildBody() {
+    if (_isLoading) {
+      return const ShimmerLoadingList();
+    }
+    if (_error.isNotEmpty) {
+      return Center(child: Text(_error));
+    }
+    if (_bookmarkedArticles.isEmpty) {
+      return const Center(child: Text('Anda belum menyimpan berita apapun.'));
+    }
+
+    return ListView.builder(
+      itemCount: _bookmarkedArticles.length,
+      itemBuilder: (context, index) {
+        final article = _bookmarkedArticles[index];
+        return ListTile(
+          leading: Image.network(article.imageUrl, width: 100, fit: BoxFit.cover),
+          title: Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis),
+          subtitle: Text(article.author.name),
+          onTap: () async {
+            // Tunggu hasil dari DetailPage
+            final result = await Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => DetailPage(article: article))
+            );
+
+            // Jika ada perubahan (artikel di-unbookmark), hapus dari list lokal
+            if (result == true && mounted) {
+              setState(() {
+                _bookmarkedArticles.removeWhere((a) => a.id == article.id);
+              });
+            }
+          },
+        );
+      },
+    );
   }
 
   @override
@@ -38,40 +95,8 @@ class _BookmarksPageState extends State<BookmarksPage> {
         title: const Text('Berita Tersimpan'),
       ),
       body: RefreshIndicator(
-        onRefresh: _refreshBookmarks,
-        child: FutureBuilder<List<Article>>(
-          future: _bookmarkedArticlesFuture,
-          builder: (context, snapshot) {
-            if (snapshot.connectionState == ConnectionState.waiting) {
-              return const ShimmerLoadingList();
-            }
-            if (snapshot.hasError) {
-              return Center(child: Text('Gagal memuat bookmark: ${snapshot.error}'));
-            }
-            if (!snapshot.hasData || snapshot.data!.isEmpty) {
-              return const Center(child: Text('Anda belum menyimpan berita apapun.'));
-            }
-            
-            final articles = snapshot.data!;
-            return ListView.builder(
-              itemCount: articles.length,
-              itemBuilder: (context, index) {
-                final article = articles[index];
-                return ListTile(
-                  leading: Image.network(article.imageUrl, width: 100, fit: BoxFit.cover),
-                  title: Text(article.title, maxLines: 2, overflow: TextOverflow.ellipsis),
-                  subtitle: Text(article.author.name),
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (_) => DetailPage(article: article))
-                    ).then((_) => _loadBookmarks()); // Muat ulang setelah kembali dari detail
-                  },
-                );
-              },
-            );
-          },
-        ),
+        onRefresh: _loadBookmarks,
+        child: _buildBody(),
       ),
     );
   }

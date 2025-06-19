@@ -14,7 +14,7 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ApiService apiService = ApiService();
-  
+
   // Mengelola state untuk artikel
   List<Article> _allArticles = [];
   List<Article> _featuredArticles = [];
@@ -73,7 +73,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  // Widget untuk AppBar kustom
   AppBar _buildAppBar() {
     return AppBar(
       title: const Text(
@@ -93,7 +92,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  // Widget untuk konten utama (Tab dan daftar berita)
   Widget _buildContent() {
     return NestedScrollView(
       headerSliverBuilder: (context, innerBoxIsScrolled) {
@@ -116,15 +114,14 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       body: TabBarView(
         controller: _tabController,
         children: [
-          _buildHeadlineTab(), // Konten untuk tab Headline
-          const Center(child: Text('Konten Top Stories')), // Placeholder
-          const Center(child: Text('Konten Similar News')), // Placeholder
+          _buildHeadlineTab(),
+          const Center(child: Text('Konten Top Stories')),
+          const Center(child: Text('Konten Similar News')),
         ],
       ),
     );
   }
 
-  // Widget untuk Tab Headline
   Widget _buildHeadlineTab() {
     return RefreshIndicator(
       onRefresh: _fetchArticles,
@@ -149,7 +146,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  // Widget untuk bagian "Featured"
   Widget _buildFeaturedSection() {
     return SizedBox(
       height: 200,
@@ -209,7 +205,6 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
     );
   }
 
-  // Widget untuk bagian "All News"
   Widget _buildAllNewsSection() {
     return ListView.builder(
       shrinkWrap: true,
@@ -217,15 +212,97 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       itemCount: _allArticles.length,
       itemBuilder: (context, index) {
         final article = _allArticles[index];
-        return _buildArticleListItem(article);
+        // Menggunakan widget ArticleListItem yang baru
+        return ArticleListItem(article: article);
       },
     );
   }
+}
 
-  // Widget untuk setiap item di daftar "All News"
-  Widget _buildArticleListItem(Article article) {
+//--- WIDGET BARU UNTUK ITEM ARTIKEL ---
+class ArticleListItem extends StatefulWidget {
+  final Article article;
+  const ArticleListItem({super.key, required this.article});
+
+  @override
+  State<ArticleListItem> createState() => _ArticleListItemState();
+}
+
+class _ArticleListItemState extends State<ArticleListItem> {
+  final ApiService _apiService = ApiService();
+  bool _isBookmarked = false;
+  bool _isLoading = true; // Mulai dengan loading untuk cek status
+
+  @override
+  void initState() {
+    super.initState();
+    _checkBookmarkStatus();
+  }
+
+  Future<void> _checkBookmarkStatus() async {
+    if (!mounted) return;
+    setState(() => _isLoading = true);
+    try {
+      final status = await _apiService.checkBookmarkStatus(widget.article.id);
+      if (mounted) {
+        setState(() {
+          _isBookmarked = status;
+        });
+      }
+    } catch (e) {
+      // Jika error (misal: belum login), anggap tidak di-bookmark
+      if (mounted) {
+        setState(() {
+          _isBookmarked = false;
+        });
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  void _toggleBookmark() async {
+    if (!mounted) return;
+
+    setState(() {
+      _isBookmarked = !_isBookmarked; // Optimistic update
+    });
+
+    try {
+      if (_isBookmarked) {
+        await _apiService.addBookmark(widget.article.id);
+      } else {
+        await _apiService.removeBookmark(widget.article.id);
+      }
+    } catch (e) {
+      // Jika gagal, kembalikan state dan tampilkan pesan
+      if (mounted) {
+        setState(() {
+          _isBookmarked = !_isBookmarked;
+        });
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Gagal: ${e.toString().replaceFirst("Exception: ", "")}'))
+        );
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => DetailPage(article: article))),
+      onTap: () async {
+        // Navigasi ke DetailPage dan tunggu hasilnya
+        final result = await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => DetailPage(article: widget.article))
+        );
+        // Jika ada perubahan dari DetailPage, cek ulang status
+        if (result == true) {
+          _checkBookmarkStatus();
+        }
+      },
       child: Container(
         margin: const EdgeInsets.only(bottom: 16),
         child: Row(
@@ -234,7 +311,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
             ClipRRect(
               borderRadius: BorderRadius.circular(12),
               child: Image.network(
-                article.imageUrl,
+                widget.article.imageUrl,
                 width: 120,
                 height: 120,
                 fit: BoxFit.cover,
@@ -248,7 +325,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    article.category,
+                    widget.article.category,
                     style: TextStyle(
                       color: Colors.grey.shade600,
                       fontSize: 12,
@@ -257,7 +334,7 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    article.title,
+                    widget.article.title,
                     style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
@@ -268,12 +345,16 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
                 ],
               ),
             ),
-            IconButton(
-              icon: const Icon(Icons.bookmark_border_outlined),
-              onPressed: () {
-                // Logika untuk menambahkan bookmark
-              },
-            ),
+            _isLoading
+                ? const SizedBox(
+                    width: 24,
+                    height: 24,
+                    child: Center(child: CircularProgressIndicator(strokeWidth: 2)),
+                  )
+                : IconButton(
+                    icon: Icon(_isBookmarked ? Icons.bookmark : Icons.bookmark_border_outlined),
+                    onPressed: _toggleBookmark,
+                  ),
           ],
         ),
       ),
