@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:intl/date_symbol_data_local.dart';
 import 'screens/main_screen.dart';
 import 'auth_service.dart';
 import 'login_page.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  await initializeDateFormatting('id_ID', null);
+  
   runApp(const MyApp());
 }
 
@@ -65,7 +69,7 @@ class MyApp extends StatelessWidget {
         hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
       ),
 
-      // PERBAIKAN DI SINI: Menggunakan CardThemeData
+      // PERBAIKAN: Menggunakan CardThemeData yang benar
       cardTheme: CardThemeData(
         color: surfaceColor,
         elevation: 4.0,

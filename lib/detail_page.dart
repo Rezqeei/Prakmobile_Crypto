@@ -2,7 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'api_service.dart';
 import 'article_model.dart';
-import 'auth_service.dart';
+// AuthService tidak lagi diperlukan di sini karena sudah ditangani oleh ApiService
+// import 'auth_service.dart';
 
 class DetailPage extends StatefulWidget {
   final Article article;
@@ -15,7 +16,6 @@ class DetailPage extends StatefulWidget {
 
 class _DetailPageState extends State<DetailPage> {
   final ApiService _apiService = ApiService();
-  final AuthService _authService = AuthService();
   bool _isBookmarked = false;
   bool _isLoadingBookmark = true;
 
@@ -29,25 +29,24 @@ class _DetailPageState extends State<DetailPage> {
     setState(() {
       _isLoadingBookmark = true;
     });
-    final token = await _authService.getToken();
-    if (token != null) {
-      try {
-        final status = await _apiService.checkBookmarkStatus(widget.article.id, token);
-        if (mounted) {
-          setState(() {
-            _isBookmarked = status;
-          });
-        }
-      } catch (e) {
-        // Handle error
-      } finally {
-        if (mounted) {
-          setState(() {
-            _isLoadingBookmark = false;
-          });
-        }
+    try {
+      // PERBAIKAN: Panggil fungsi tanpa token
+      final status = await _apiService.checkBookmarkStatus(widget.article.id);
+      if (mounted) {
+        setState(() {
+          _isBookmarked = status;
+        });
       }
-    } else {
+    } catch (e) {
+      // Jika pengguna belum login, ApiService akan melempar Exception.
+      // Kita bisa menangani UI di sini jika diperlukan, misal:
+      // menampilkan ikon bookmark non-aktif.
+      if (mounted) {
+        setState(() {
+          _isBookmarked = false;
+        });
+      }
+    } finally {
       if (mounted) {
         setState(() {
           _isLoadingBookmark = false;
@@ -57,35 +56,45 @@ class _DetailPageState extends State<DetailPage> {
   }
 
   void _toggleBookmark() async {
-    final token = await _authService.getToken();
-    if (token == null) {
-      ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Please login to bookmark articles.')));
-      return;
-    }
-
+    // Logika untuk mengambil token manual dihapus
     setState(() {
       _isBookmarked = !_isBookmarked;
     });
 
     try {
       if (_isBookmarked) {
-        await _apiService.addBookmark(widget.article.id, token);
+        // PERBAIKAN: Panggil fungsi tanpa token
+        await _apiService.addBookmark(widget.article.id);
+        if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikel berhasil ditambahkan ke bookmark.')));
+        }
       } else {
-        await _apiService.removeBookmark(widget.article.id, token);
+        // PERBAIKAN: Panggil fungsi tanpa token
+        await _apiService.removeBookmark(widget.article.id);
+        if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Artikel berhasil dihapus dari bookmark.')));
+        }
       }
     } catch (e) {
+      // Jika gagal, kembalikan state UI ke semula
       setState(() {
         _isBookmarked = !_isBookmarked;
       });
-      ScaffoldMessenger.of(context)
-          .showSnackBar(const SnackBar(content: Text('Failed to update bookmark.')));
+      // Tampilkan pesan error yang lebih jelas dari ApiService
+      if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text('Gagal: ${e.toString().replaceFirst("Exception: ", "")}'))
+          );
+      }
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final publishedDate = DateFormat("d MMMM yyyy").format(DateTime.parse(widget.article.createdAt));
+    // Pastikan createdAt tidak null sebelum parsing
+    final publishedDate = widget.article.createdAt.isNotEmpty
+        ? DateFormat("d MMMM yyyy", "id_ID").format(DateTime.parse(widget.article.createdAt))
+        : "Tanggal tidak tersedia";
 
     return Scaffold(
       body: CustomScrollView(
@@ -163,19 +172,26 @@ class _DetailPageState extends State<DetailPage> {
                               style: const TextStyle(fontWeight: FontWeight.bold),
                             ),
                             Text(
-                              'Published on $publishedDate',
+                              'Diterbitkan pada $publishedDate',
                               style: TextStyle(
-                                  color: Colors.grey[600], fontSize: 12),
+                                  color: Colors.grey[400], fontSize: 12),
                             ),
                           ],
                         ),
                       ),
+                      Text(
+                        widget.article.readTime,
+                        style: TextStyle(
+                          color: Colors.grey[400],
+                          fontSize: 12
+                        ),
+                      )
                     ],
                   ),
                   const SizedBox(height: 24.0),
                   Text(
                     widget.article.content,
-                    style: const TextStyle(fontSize: 16.0, height: 1.5),
+                    style: const TextStyle(fontSize: 16.0, height: 1.6),
                   ),
                 ],
               ),

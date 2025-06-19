@@ -21,8 +21,12 @@ class _LoginPageState extends State<LoginPage> {
   void _login() async {
     setState(() => _isLoading = true);
     try {
-      final response = await _apiService.login(_emailController.text, _passwordController.text);
-      final token = response['data']['token'];
+      final response = await _apiService.login(
+          _emailController.text, _passwordController.text);
+          
+      // PERBAIKAN: Langsung ambil 'token' dari response
+      final token = response['token'];
+
       await _authService.saveToken(token);
       if (!mounted) return;
       Navigator.of(context).pushReplacement(
@@ -31,7 +35,8 @@ class _LoginPageState extends State<LoginPage> {
     } catch (e) {
       if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text('Login Gagal: ${e.toString()}')),
+        // Menampilkan pesan error yang lebih bersih dari ApiService
+        SnackBar(content: Text('Login Gagal: ${e.toString().replaceFirst("Exception: ", "")}')),
       );
     } finally {
       if (mounted) setState(() => _isLoading = false);
