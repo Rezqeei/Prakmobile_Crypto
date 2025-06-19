@@ -4,11 +4,13 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'article_model.dart';
 import 'auth_service.dart';
-import 'user_model.dart'; // Impor model User yang baru dibuat
+import 'user_model.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 class ApiService {
-  final String baseUrl = "https://rest-api-berita.vercel.app/api/v1";
+  //final String baseUrl = "";
   final AuthService _authService = AuthService();
+  final String baseUrl = dotenv.env['https://rest-api-berita.vercel.app/api/v1'] ?? 'URL_DEFAULT_JIKA_GAGAL';
 
   // Helper untuk memproses semua respons dari API secara konsisten
   dynamic _processResponse(http.Response response) {

@@ -8,9 +8,11 @@ import 'package:shared_preferences/shared_preferences.dart'; // Import untuk cek
 import 'screens/main_screen.dart';
 import 'auth_service.dart';
 import 'login_page.dart';
+import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await dotenv.load(fileName: ".env");
   await initializeDateFormatting('id_ID', null);
 
   runApp(const MyApp());

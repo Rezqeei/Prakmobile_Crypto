@@ -5,6 +5,7 @@ import 'package:prakmobile_crypto/auth_service.dart';
 import 'package:prakmobile_crypto/login_page.dart';
 import 'package:prakmobile_crypto/main.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:async';
 
 class OnboardingScreen extends StatefulWidget {
   const OnboardingScreen({super.key});
@@ -16,6 +17,19 @@ class OnboardingScreen extends StatefulWidget {
 class _OnboardingScreenState extends State<OnboardingScreen> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
+  @override
+  void initState() {
+    Timer(const Duration(seconds: 3), () {
+      if (mounted && _pageController.page == 0) {
+        _pageController.nextPage(
+          duration: const Duration(milliseconds: 400),
+          curve: Curves.easeInOut,
+        );
+      }
+    });
+    super.initState();
+  }
 
   // Data untuk setiap halaman onboarding
   final List<Map<String, String>> _onboardingData = [

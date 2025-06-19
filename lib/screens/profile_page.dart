@@ -157,6 +157,7 @@ class _ProfilePageState extends State<ProfilePage> {
           title: const Text('Edit Profil'),
            subtitle: const Text('Endpoint API tidak tersedia'),
           trailing: const Icon(Icons.chevron_right),
+          enabled: false,
           onTap: () {
              ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Fitur ini belum dapat digunakan karena tidak ada endpoint API untuk update profil.'),
@@ -169,6 +170,7 @@ class _ProfilePageState extends State<ProfilePage> {
           title: const Text('Ganti Password'),
           subtitle: const Text('Endpoint API tidak tersedia'),
           trailing: const Icon(Icons.chevron_right),
+          enabled: false,
           onTap: () {
             ScaffoldMessenger.of(context).showSnackBar(const SnackBar(
               content: Text('Fitur ini belum dapat digunakan karena tidak ada endpoint API untuk ganti password.'),
@@ -180,6 +182,7 @@ class _ProfilePageState extends State<ProfilePage> {
         ListTile(
           leading: const Icon(Icons.logout, color: Colors.red),
           title: const Text('Logout', style: TextStyle(color: Colors.red)),
+          enabled: false,
           onTap: _handleLogout,
         ),
       ],

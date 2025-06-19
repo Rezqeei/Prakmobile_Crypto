@@ -15,7 +15,6 @@ class HomePage extends StatefulWidget {
 class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final ApiService apiService = ApiService();
-
   // Mengelola state untuk artikel
   List<Article> _allArticles = [];
   List<Article> _featuredArticles = [];
