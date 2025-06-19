@@ -7,14 +7,15 @@ version: 1.0.0+1
 environment:
   sdk: '>=3.0.0 <4.0.0' # Sesuaikan dengan versi SDK Anda
 
+# Bagian ini untuk paket/library yang digunakan dalam kode Dart Anda
 dependencies:
   flutter:
     sdk: flutter
   http: ^1.2.1
   shared_preferences: ^2.2.3
   intl: ^0.19.0
-  google_fonts: ^6.2.1  # Tambahkan ini
-  shimmer: ^3.0.0       # Tambahkan ini
+  google_fonts: ^6.2.1
+  shimmer: ^3.0.0
   cupertino_icons: ^1.0.8
 
 dev_dependencies:
@@ -22,5 +23,10 @@ dev_dependencies:
     sdk: flutter
   flutter_lints: ^5.0.0
 
+# Bagian ini untuk konfigurasi yang spesifik untuk Flutter
 flutter:
   uses-material-design: true
+
+  # Pastikan 'assets:' berada di dalam 'flutter:' dengan indentasi yang benar
+  assets:
+    - assets/images/
