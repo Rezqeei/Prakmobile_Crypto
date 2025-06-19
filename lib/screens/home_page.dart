@@ -3,6 +3,7 @@ import '../api_service.dart';
 import '../article_model.dart';
 import '../detail_page.dart';
 import '../widgets/shimer_loading.dart';
+import 'search_page.dart'; // Pastikan import ini ada
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -84,7 +85,11 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
         IconButton(
           icon: const Icon(Icons.search, size: 28),
           onPressed: () {
-            // Logika untuk fungsionalitas pencarian
+            // Navigasi ke SearchPage
+            Navigator.push(
+              context,
+              MaterialPageRoute(builder: (_) => const SearchPage()),
+            );
           },
         ),
         const SizedBox(width: 8),
@@ -212,14 +217,12 @@ class _HomePageState extends State<HomePage> with SingleTickerProviderStateMixin
       itemCount: _allArticles.length,
       itemBuilder: (context, index) {
         final article = _allArticles[index];
-        // Menggunakan widget ArticleListItem yang baru
         return ArticleListItem(article: article);
       },
     );
   }
 }
 
-//--- WIDGET BARU UNTUK ITEM ARTIKEL ---
 class ArticleListItem extends StatefulWidget {
   final Article article;
   const ArticleListItem({super.key, required this.article});
@@ -231,7 +234,7 @@ class ArticleListItem extends StatefulWidget {
 class _ArticleListItemState extends State<ArticleListItem> {
   final ApiService _apiService = ApiService();
   bool _isBookmarked = false;
-  bool _isLoading = true; // Mulai dengan loading untuk cek status
+  bool _isLoading = true;
 
   @override
   void initState() {
@@ -250,7 +253,6 @@ class _ArticleListItemState extends State<ArticleListItem> {
         });
       }
     } catch (e) {
-      // Jika error (misal: belum login), anggap tidak di-bookmark
       if (mounted) {
         setState(() {
           _isBookmarked = false;
@@ -267,7 +269,7 @@ class _ArticleListItemState extends State<ArticleListItem> {
     if (!mounted) return;
 
     setState(() {
-      _isBookmarked = !_isBookmarked; // Optimistic update
+      _isBookmarked = !_isBookmarked;
     });
 
     try {
@@ -277,7 +279,6 @@ class _ArticleListItemState extends State<ArticleListItem> {
         await _apiService.removeBookmark(widget.article.id);
       }
     } catch (e) {
-      // Jika gagal, kembalikan state dan tampilkan pesan
       if (mounted) {
         setState(() {
           _isBookmarked = !_isBookmarked;
@@ -293,12 +294,10 @@ class _ArticleListItemState extends State<ArticleListItem> {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: () async {
-        // Navigasi ke DetailPage dan tunggu hasilnya
         final result = await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => DetailPage(article: widget.article))
         );
-        // Jika ada perubahan dari DetailPage, cek ulang status
         if (result == true) {
           _checkBookmarkStatus();
         }

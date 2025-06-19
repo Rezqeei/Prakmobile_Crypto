@@ -30,11 +30,14 @@ class ApiService {
     return await request(token);
   }
 
-  /// Mengambil daftar artikel dengan dukungan pagination.
-  Future<List<Article>> getArticles({String? category, int page = 1, int limit = 10}) async {
+  /// Mengambil daftar artikel dengan dukungan pagination, kategori, dan pencarian.
+  Future<List<Article>> getArticles({String? category, int page = 1, int limit = 10, String? searchQuery}) async {
     var url = '$baseUrl/news?page=$page&limit=$limit';
     if (category != null && category.isNotEmpty) {
       url += '&category=$category';
+    }
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      url += '&title=$searchQuery';
     }
     final response = await http.get(Uri.parse(url));
     final data = _processResponse(response);
@@ -79,7 +82,6 @@ class ApiService {
     });
     final data = _processResponse(response);
     
-    // PERBAIKAN: Menangani kasus di mana API mengembalikan Map berisi List
     if (data is Map<String, dynamic> && data.containsKey('articles')) {
        final List<dynamic> articlesData = data['articles'];
        return articlesData.map((json) => Article.fromJson(json)).toList();
