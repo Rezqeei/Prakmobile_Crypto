@@ -1,8 +1,9 @@
+// lib/api_service.dart
+
 import 'dart:convert';
 import 'package:http/http.dart' as http;
 import 'article_model.dart';
 import 'auth_service.dart';
-import 'user_model.dart'; // Pastikan file ini sudah dibuat
 
 class ApiService {
   final String baseUrl = "https://rest-api-berita.vercel.app/api/v1";
@@ -40,17 +41,27 @@ class ApiService {
 
     final response = await http.get(Uri.parse(url));
     final data = _processResponse(response);
-    final List<dynamic> articlesData = data['articles'];
-    List<Article> articles =
-        articlesData.map((json) => Article.fromJson(json)).toList();
 
-    if (searchQuery != null && searchQuery.isNotEmpty) {
-      articles = articles.where((article) {
-        return article.title.toLowerCase().contains(searchQuery.toLowerCase());
-      }).toList();
+    // --- PERBAIKAN DIMULAI DI SINI ---
+    // Tambahkan pengecekan untuk memastikan data adalah Map dan memiliki key 'articles'
+    if (data is Map<String, dynamic> && data.containsKey('articles') && data['articles'] is List) {
+      final List<dynamic> articlesData = data['articles'];
+      List<Article> articles = articlesData
+          .map((json) => Article.fromJson(json))
+          .toList();
+
+      if (searchQuery != null && searchQuery.isNotEmpty) {
+        articles = articles.where((article) {
+          return article.title.toLowerCase().contains(searchQuery.toLowerCase());
+        }).toList();
+      }
+
+      return articles;
+    } else {
+      // Jika struktur data tidak sesuai, kembalikan list kosong untuk mencegah crash
+      return [];
     }
-
-    return articles;
+    // --- PERBAIKAN SELESAI ---
   }
 
   /// Melakukan login pengguna.
@@ -175,44 +186,4 @@ class ApiService {
   }
 
   // --- FUNGSI-FUNGSI BARU UNTUK PROFIL ---
-
-  /// Mengambil data profil pengguna yang sedang login.
-  Future<User> getUserProfile() async {
-    final response = await _authenticatedRequest((token) => http.get(
-          Uri.parse('$baseUrl/users/me'), // Asumsi endpoint
-          headers: {'Authorization': 'Bearer $token'},
-        ));
-    final data = _processResponse(response);
-    return User.fromJson(data);
-  }
-
-  /// Mengupdate data profil pengguna.
-  Future<void> updateUserProfile({required String name, required String title}) async {
-    await _authenticatedRequest((token) => http.put(
-          Uri.parse('$baseUrl/users/me'), // Asumsi endpoint
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode({'name': name, 'title': title}),
-        ));
-  }
-
-  /// Mengubah kata sandi pengguna.
-  Future<void> changePassword({
-    required String currentPassword,
-    required String newPassword,
-  }) async {
-    await _authenticatedRequest((token) => http.put(
-          Uri.parse('$baseUrl/auth/password'), // Asumsi endpoint
-          headers: {
-            'Content-Type': 'application/json; charset=UTF-8',
-            'Authorization': 'Bearer $token',
-          },
-          body: jsonEncode({
-            'currentPassword': currentPassword,
-            'newPassword': newPassword,
-          }),
-        ));
-  }
 }
