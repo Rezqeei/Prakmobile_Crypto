@@ -17,24 +17,26 @@ class MyApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    const Color primaryColor = Color(0xFF4091C9);
-    const Color backgroundColor = Color(0xFF0D1B2A);
-    const Color surfaceColor = Color(0xFF1B263B);
-    const Color textColor = Color(0xFFE0E1DD);
+    // Palet warna untuk Tema Terang (Light Theme)
+    const Color primaryColor = Color(0xFF007AFF);
+    const Color backgroundColor = Color(0xFFF2F2F7);
+    const Color surfaceColor = Colors.white;
+    const Color textColor = Color(0xFF1D1D1F);
 
-    final ThemeData darkTheme = ThemeData(
-      brightness: Brightness.dark,
+    // Mendefinisikan ThemeData untuk tema terang
+    final ThemeData lightTheme = ThemeData(
+      brightness: Brightness.light,
       primaryColor: primaryColor,
       scaffoldBackgroundColor: backgroundColor,
       
-      textTheme: GoogleFonts.poppinsTextTheme(
+      textTheme: GoogleFonts.interTextTheme(
         Theme.of(context).textTheme.apply(
           bodyColor: textColor,
           displayColor: textColor,
         ),
       ),
 
-      colorScheme: const ColorScheme.dark(
+      colorScheme: const ColorScheme.light(
         primary: primaryColor,
         secondary: primaryColor,
         background: backgroundColor,
@@ -43,7 +45,7 @@ class MyApp extends StatelessWidget {
         onSecondary: Colors.white,
         onBackground: textColor,
         onSurface: textColor,
-        error: Colors.redAccent,
+        error: Colors.red,
         onError: Colors.white,
       ),
 
@@ -52,27 +54,38 @@ class MyApp extends StatelessWidget {
           backgroundColor: primaryColor,
           foregroundColor: Colors.white,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
-          padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+          padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 24),
+          elevation: 0,
         ),
       ),
 
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
-        fillColor: surfaceColor.withOpacity(0.8),
+        fillColor: Colors.white,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
-          borderSide: BorderSide.none,
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: BorderSide(color: Colors.grey.shade300),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(10),
+          borderSide: const BorderSide(color: primaryColor, width: 2),
         ),
         labelStyle: TextStyle(color: textColor.withOpacity(0.7)),
         hintStyle: TextStyle(color: textColor.withOpacity(0.5)),
       ),
 
-      // PERBAIKAN: Menggunakan CardThemeData yang benar
+      // PERBAIKAN: Menggunakan nama class CardThemeData yang benar
       cardTheme: CardThemeData(
         color: surfaceColor,
-        elevation: 4.0,
+        elevation: 1.0,
+        shadowColor: Colors.grey.withOpacity(0.2),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
@@ -80,22 +93,24 @@ class MyApp extends StatelessWidget {
       ),
 
       bottomNavigationBarTheme: const BottomNavigationBarThemeData(
-        backgroundColor: surfaceColor,
+        backgroundColor: Colors.white,
         selectedItemColor: primaryColor,
         unselectedItemColor: Colors.grey,
         type: BottomNavigationBarType.fixed,
+        elevation: 1.0,
       ),
       
       appBarTheme: const AppBarTheme(
         backgroundColor: backgroundColor,
+        foregroundColor: textColor,
         elevation: 0,
-        centerTitle: true,
+        centerTitle: false, // Judul AppBar rata kiri sesuai desain
       ),
     );
 
     return MaterialApp(
       title: 'Crypto News',
-      theme: darkTheme,
+      theme: lightTheme,
       home: const AuthCheck(),
       debugShowCheckedModeBanner: false,
     );
