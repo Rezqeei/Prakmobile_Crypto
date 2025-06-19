@@ -32,17 +32,26 @@ class ApiService {
 
   /// Mengambil daftar artikel dengan dukungan pagination, kategori, dan pencarian.
   Future<List<Article>> getArticles({String? category, int page = 1, int limit = 10, String? searchQuery}) async {
+    // Hapus parameter 'title' dari URL
     var url = '$baseUrl/news?page=$page&limit=$limit';
     if (category != null && category.isNotEmpty) {
       url += '&category=$category';
     }
-    if (searchQuery != null && searchQuery.isNotEmpty) {
-      url += '&title=$searchQuery';
-    }
+    
     final response = await http.get(Uri.parse(url));
     final data = _processResponse(response);
     final List<dynamic> articlesData = data['articles'];
-    return articlesData.map((json) => Article.fromJson(json)).toList();
+    List<Article> articles = articlesData.map((json) => Article.fromJson(json)).toList();
+
+    // Lakukan filtering di sisi klien jika ada searchQuery
+    if (searchQuery != null && searchQuery.isNotEmpty) {
+      articles = articles.where((article) {
+        // Mencocokkan searchQuery dengan judul artikel (case-insensitive)
+        return article.title.toLowerCase().contains(searchQuery.toLowerCase());
+      }).toList();
+    }
+
+    return articles;
   }
 
   /// Melakukan login pengguna.
